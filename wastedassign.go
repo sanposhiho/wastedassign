@@ -8,11 +8,11 @@ import (
 	"golang.org/x/tools/go/ssa"
 )
 
-const doc = "reassignednonuse finds the value which is reassigned, but not used after that."
+const doc = "wastedassign finds wasted assignment statements."
 
 // Analyzer is ...
 var Analyzer = &analysis.Analyzer{
-	Name: "reassignednonuse",
+	Name: "wastedassign",
 	Doc:  doc,
 	Run:  run,
 	Requires: []*analysis.Analyzer{
