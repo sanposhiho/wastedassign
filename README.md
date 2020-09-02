@@ -13,7 +13,7 @@ func main() {
 	n := 10
 	println(n)
 
-	n = 143        // want "Inefficient assignment"
+	n = 143        // want "wasted assignment"
 	n = 13
 	println(n)
 

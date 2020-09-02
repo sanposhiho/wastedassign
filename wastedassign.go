@@ -31,7 +31,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				switch rf.(type) {
 				case *ssa.Store:
 					if isAfterStore {
-						pass.Reportf(storePos, "Inefficient assignment")
+						pass.Reportf(storePos, "wasted assignment")
 					}
 					storePos = rf.Pos()
 					isAfterStore = true
