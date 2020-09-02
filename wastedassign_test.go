@@ -12,4 +12,3 @@ func TestAnalyzer(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, wastedassign.Analyzer, "a")
 }
-
