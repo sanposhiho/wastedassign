@@ -1,41 +1,49 @@
 package wastedassign
 
 import (
-	"go/ast"
+	"go/token"
 
+	"github.com/sanposhiho/tools/go/analysis/passes/buildssa"
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
+	"golang.org/x/tools/go/ssa"
 )
 
-const doc = "wastedassign is ..."
+const doc = "reassignednonuse finds the value which is reassigned, but not used after that."
 
 // Analyzer is ...
 var Analyzer = &analysis.Analyzer{
-	Name: "wastedassign",
+	Name: "reassignednonuse",
 	Doc:  doc,
 	Run:  run,
 	Requires: []*analysis.Analyzer{
-		inspect.Analyzer,
+		buildssa.Analyzer,
 	},
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	s := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
 
-	nodeFilter := []ast.Node{
-		(*ast.Ident)(nil),
-	}
-
-	inspect.Preorder(nodeFilter, func(n ast.Node) {
-		switch n := n.(type) {
-		case *ast.Ident:
-			if n.Name == "gopher" {
-				pass.Reportf(n.Pos(), "identifier is gopher")
+	for _, sf := range s.SrcFuncs {
+		for _, local := range sf.Locals {
+			var isAfterStore bool
+			var storePos token.Pos
+			for _, rf := range *(local.Referrers()) {
+				switch rf.(type) {
+				case *ssa.Store:
+					if isAfterStore {
+						pass.Reportf(storePos, "Inefficient assignment")
+					}
+					storePos = rf.Pos()
+					isAfterStore = true
+				default:
+					isAfterStore = false
+				}
+			}
+			// find the value, reassigned but never used afterwards
+			if isAfterStore {
+				pass.Reportf(storePos, "reassigned, but never used afterwards")
 			}
 		}
-	})
-
+	}
 	return nil, nil
 }
-
