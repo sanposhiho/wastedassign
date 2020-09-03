@@ -29,8 +29,8 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					var buf [10]*ssa.Value
 					for _, op := range ist.Operands(buf[:0]) {
 						if (*op) != nil && opInLocals(sf.Locals, op) {
-							if isNextOperationToOpIsStore([]*ssa.BasicBlock{bl}, op, 0) {
-								pass.Reportf(ist.Pos(), "wasted assignment")
+							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{bl}, op, 0); reason != notWasted {
+								pass.Reportf(ist.Pos(), reason.String())
 							}
 						}
 					}
@@ -50,24 +50,45 @@ func opInLocals(locals []*ssa.Alloc, op *ssa.Value) bool {
 	return false
 }
 
+type wastedReason string
+
+const (
+	noUseUntilReturn wastedReason = "reassigned, but never used afterwards"
+	reassignedSoon   wastedReason = "wasted assignment"
+	notWasted        wastedReason = ""
+)
+
+func (wr wastedReason) String() string {
+	switch wr {
+	case noUseUntilReturn:
+		return "reassigned, but never used afterwards"
+	case reassignedSoon:
+		return "wasted assignment"
+	case notWasted:
+		return ""
+	}
+	return ""
+}
+
 // 次のblockまでみて、storeが連続であるかを調べる
-func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, depth int) bool {
+func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, depth int) wastedReason {
 
-	// depth == 0の時は少なくとも一つstoreが見つかるので一回めは飛ばす
-	skipStore := true
+	// depth == 0の時は少なくとも一つstoreが見つかるので一回めは飛ばすためのflag
+	skipStore := depth == 0
 
-	// SuccsのSuccsが全てnilだった場合はtrueを返したい
-	flag := true
+	// blsが全てSuccsを持っていなかった場合を判別するためのflag
+	noNextSuccs := true
+
 	for _, bl := range bls {
 		for _, ist := range bl.Instrs {
 			switch ist.(type) {
 			case *ssa.Store:
 				var buf [10]*ssa.Value
 				for _, op := range ist.Operands(buf[:0]) {
-					if op == currentOp {
+					if *op == *currentOp {
 						if !skipStore {
 							// 連続storeなのでtrue
-							return true
+							return reassignedSoon
 						}
 						skipStore = false
 					}
@@ -77,21 +98,25 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, dep
 				for _, op := range ist.Operands(buf[:0]) {
 					if *op == *currentOp {
 						// 連続storeではなかった
-						return false
+						return ""
 					}
 				}
 			}
 		}
-		// 次のBlockにcurrentOpに対する操作がなかった
 
-		if bl.Succs != nil {
-			flag = false
-		}
-
-		if bl.Succs != nil && isNextOperationToOpIsStore(bl.Succs, currentOp, depth+1) {
-			// その次にはあった&true
-			return true
+		if len(bl.Succs) != 0 {
+			noNextSuccs = false
+			wastedReason := isNextOperationToOpIsStore(bl.Succs, currentOp, depth+1)
+			if wastedReason != "" {
+				return wastedReason
+			}
+			// 次のBlockにcurrentOpに対する操作がなかった
 		}
 	}
-	return flag
+
+	if noNextSuccs {
+		return noUseUntilReturn
+	} else {
+		return notWasted
+	}
 }
