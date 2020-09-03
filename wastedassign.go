@@ -116,7 +116,6 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, dep
 
 	if noNextSuccs {
 		return noUseUntilReturn
-	} else {
-		return notWasted
 	}
+	return notWasted
 }
