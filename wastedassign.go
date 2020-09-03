@@ -43,25 +43,6 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 
-func rmInstrFromInstrs(instrs []ssa.Instruction, instrToRm ssa.Instruction) []ssa.Instruction {
-	var rto []ssa.Instruction
-	for _, i := range instrs {
-		if i != instrToRm {
-			rto = append(rto, i)
-		}
-	}
-	return rto
-}
-
-func opInLocals(locals []*ssa.Alloc, op *ssa.Value) bool {
-	for _, l := range locals {
-		if *op == ssa.Value(l) {
-			return true
-		}
-	}
-	return false
-}
-
 type wastedReason string
 
 const (
@@ -130,4 +111,23 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, dep
 		return noUseUntilReturn
 	}
 	return notWasted
+}
+
+func rmInstrFromInstrs(instrs []ssa.Instruction, instrToRm ssa.Instruction) []ssa.Instruction {
+	var rto []ssa.Instruction
+	for _, i := range instrs {
+		if i != instrToRm {
+			rto = append(rto, i)
+		}
+	}
+	return rto
+}
+
+func opInLocals(locals []*ssa.Alloc, op *ssa.Value) bool {
+	for _, l := range locals {
+		if *op == ssa.Value(l) {
+			return true
+		}
+	}
+	return false
 }
