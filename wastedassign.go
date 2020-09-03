@@ -23,22 +23,34 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	for _, sf := range s.SrcFuncs {
 		for _, bl := range sf.Blocks {
+			blCopy := bl
 			for _, ist := range bl.Instrs {
 				switch ist.(type) {
 				case *ssa.Store:
 					var buf [10]*ssa.Value
 					for _, op := range ist.Operands(buf[:0]) {
 						if (*op) != nil && opInLocals(sf.Locals, op) {
-							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{bl}, op, 0); reason != notWasted {
+							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{blCopy}, op, 0); reason != notWasted {
 								pass.Reportf(ist.Pos(), reason.String())
 							}
 						}
 					}
 				}
+				blCopy.Instrs = rmInstrFromInstrs(blCopy.Instrs, ist)
 			}
 		}
 	}
 	return nil, nil
+}
+
+func rmInstrFromInstrs(instrs []ssa.Instruction, instrToRm ssa.Instruction) []ssa.Instruction {
+	var rto []ssa.Instruction
+	for _, i := range instrs {
+		if i != instrToRm {
+			rto = append(rto, i)
+		}
+	}
+	return rto
 }
 
 func opInLocals(locals []*ssa.Alloc, op *ssa.Value) bool {
@@ -110,7 +122,7 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, dep
 			if wastedReason != "" {
 				return wastedReason
 			}
-			// 次のBlockにcurrentOpに対する操作がなかった
+			// SuccsにcurrentOpに対する操作がなかった
 		}
 	}
 
