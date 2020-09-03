@@ -1,8 +1,6 @@
 package wastedassign
 
 import (
-	"fmt"
-
 	"github.com/sanposhiho/tools/go/analysis/passes/buildssa"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/ssa"
@@ -62,19 +60,9 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, dep
 	flag := true
 	for _, bl := range bls {
 		for _, ist := range bl.Instrs {
-			fmt.Print("\n")
-			fmt.Print("\n")
-			fmt.Print(ist)
-			fmt.Print("\n")
-
-			switch w := ist.(type) {
+			switch ist.(type) {
 			case *ssa.Store:
-				fmt.Print("store\n")
-				fmt.Print(w.Addr)
-				fmt.Print("store\n")
-				fmt.Print(w.Val)
 				var buf [10]*ssa.Value
-				fmt.Print(ist.Operands(buf[:0]))
 				for _, op := range ist.Operands(buf[:0]) {
 					if op == currentOp {
 						if !skipStore {
@@ -84,14 +72,10 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, dep
 						skipStore = false
 					}
 				}
-			case *ssa.MakeClosure:
-				fmt.Print("makeuuuuuuuuuuuuuuuuuuuu\n")
 			default:
-				fmt.Print("default\n")
 				var buf [10]*ssa.Value
-				fmt.Print(ist.Operands(buf[:0]))
 				for _, op := range ist.Operands(buf[:0]) {
-					if op == currentOp {
+					if *op == *currentOp {
 						// 連続storeではなかった
 						return false
 					}
