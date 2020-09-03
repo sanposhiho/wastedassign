@@ -1,14 +1,13 @@
 package a
 
 func f() {
-	n := 10
-	println(n)
+	useOutOfIf := 0 // want "wasted assignment"
+	if false {
+		useOutOfIf = 10 // want "wasted assignment"
 
-	n = 143 // want "wasted assignment"
-	n = 13
-	println(n)
-
-	hoge := 23
-	println(hoge)
-	hoge = 23 // want "reassigned, but never used afterwards"
+		return
+	}
+	useOutOfIf = 12
+	println(useOutOfIf)
+	return
 }
