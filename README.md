@@ -7,18 +7,18 @@ found the value ...
 - reassigned, but reassigned soon
 
 ```
-package main
+package a
 
-func main() {
-	n := 10
-	println(n)
+func f() {
+	useOutOfIf := 0 // want "wasted assignment"
+	if false {
+		useOutOfIf = 10 // want "wasted assignment"
+		useOutOfIf = 10 // want "reassigned, but never used afterwards"
 
-	n = 143        // want "wasted assignment"
-	n = 13
-	println(n)
-
-	hoge := 23
-	println(hoge)
-	hoge = 23 // want "reassigned, but never used afterwards"
+		return
+	}
+	useOutOfIf = 12
+	println(useOutOfIf)
+	return
 }
 ```
