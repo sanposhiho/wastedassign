@@ -1,4 +1,4 @@
-# wastedassign
+# wastedassign(English)
 `wastedassign` finds wasted assignment statements
 
 found the value ...
@@ -22,3 +22,11 @@ func f() {
 	return
 }
 ```
+
+# wastedassign(Japanese)
+`wastedassign` は無駄な代入を発見してくれる静的解析ツールです。
+
+以下のようなstatementsを発見します。
+
+- 代入されたがreturnまでその代入された値が使用されることはなかった
+- 代入されたが代入された値が用いられることなく、別の値に変更された
