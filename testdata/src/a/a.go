@@ -21,9 +21,8 @@ func f(param int) int {
 	}
 	useOutOfIf = 12
 	println(useOutOfIf)
-	println(ret)
 	useOutOfIf = 192
 	useOutOfIf += 100
 	useOutOfIf += 200 // want "reassigned, but never used afterwards"
-	return 0
+	return ret
 }
