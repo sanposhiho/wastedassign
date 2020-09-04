@@ -5,12 +5,11 @@ func p(x int) int {
 }
 
 func f(param int) int {
-	useOutOfIf := 1212121 // want "wasted assignment"
-	ret := 0              // want "wasted assignment"
+	println(param)
+	useOutOfIf := 1212121
+	ret := 0
 	if false {
-		useOutOfIf = 10 // want "wasted assignment"
-		useOutOfIf = 10 // want "reassigned, but never used afterwards"
-
+		useOutOfIf = 200 // want "reassigned, but never used afterwards"
 		return 0
 	} else if param == 100 {
 		ret = useOutOfIf
@@ -22,8 +21,9 @@ func f(param int) int {
 	}
 	useOutOfIf = 12
 	println(useOutOfIf)
+	println(ret)
 	useOutOfIf = 192
 	useOutOfIf += 100
 	useOutOfIf += 200 // want "reassigned, but never used afterwards"
-	return ret
+	return 0
 }

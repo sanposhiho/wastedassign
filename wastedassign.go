@@ -25,18 +25,18 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		for _, bl := range sf.Blocks {
 			blCopy := bl
 			for _, ist := range bl.Instrs {
+				blCopy.Instrs = rmInstrFromInstrs(blCopy.Instrs, ist)
 				switch ist.(type) {
 				case *ssa.Store:
 					var buf [10]*ssa.Value
 					for _, op := range ist.Operands(buf[:0]) {
 						if (*op) != nil && opInLocals(sf.Locals, op) {
-							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{blCopy}, op, 0, sf.Locals); reason != notWasted {
+							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{blCopy}, op); reason != notWasted {
 								pass.Reportf(ist.Pos(), reason.String())
 							}
 						}
 					}
 				}
-				blCopy.Instrs = rmInstrFromInstrs(blCopy.Instrs, ist)
 			}
 		}
 	}
@@ -64,29 +64,26 @@ func (wr wastedReason) String() string {
 }
 
 // 次のblockまでみて、storeが連続であるかを調べる
-func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, depth int, locals []*ssa.Alloc) wastedReason {
-
-	// depth == 0の時は少なくとも一つstoreが見つかるので一回めは飛ばすためのflag
-	skipStore := depth == 0
-
-	// blsが全てSuccsを持っていなかった場合を判別するためのflag
-	noNextSuccs := true
+func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value) wastedReason {
+	wastedReasons := []wastedReason{}
+	breakFlag := false
 
 	for _, bl := range bls {
 		for _, ist := range bl.Instrs {
+			if breakFlag {
+				break
+			}
 			switch w := ist.(type) {
 			case *ssa.Store:
 				var buf [10]*ssa.Value
 				for _, op := range ist.Operands(buf[:0]) {
 					if *op == *currentOp {
 						if w.Addr.Name() == (*currentOp).Name() {
-							if !skipStore {
-								// 連続storeなのでtrue
-								return reassignedSoon
-							}
-							skipStore = false
-						} else if w.Val.Name() == (*currentOp).Name() {
-							return ""
+							wastedReasons = append(wastedReasons, reassignedSoon)
+							breakFlag = true
+							break
+						} else {
+							return notWasted
 						}
 					}
 				}
@@ -95,26 +92,47 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, dep
 				for _, op := range ist.Operands(buf[:0]) {
 					if *op == *currentOp {
 						// 連続storeではなかった
-						return ""
+						return notWasted
 					}
 				}
 			}
 		}
 
 		if len(bl.Succs) != 0 {
-			noNextSuccs = false
-			wastedReason := isNextOperationToOpIsStore(bl.Succs, currentOp, depth+1, locals)
-			if wastedReason != "" {
-				return wastedReason
+			wastedReason := isNextOperationToOpIsStore(bl.Succs, currentOp)
+			if wastedReason == notWasted {
+				return notWasted
 			}
+			wastedReasons = append(wastedReasons, wastedReason)
 			// SuccsにcurrentOpに対する操作がなかった
 		}
 	}
 
-	if noNextSuccs {
+	if len(wastedReasons) != 0 {
+		if containReassignedSoon(wastedReasons) {
+			return reassignedSoon
+		}
 		return noUseUntilReturn
 	}
-	return notWasted
+	return noUseUntilReturn
+}
+
+func containNotWasted(ws []wastedReason) bool {
+	for _, w := range ws {
+		if w == notWasted {
+			return true
+		}
+	}
+	return false
+}
+
+func containReassignedSoon(ws []wastedReason) bool {
+	for _, w := range ws {
+		if w == reassignedSoon {
+			return true
+		}
+	}
+	return false
 }
 
 func rmInstrFromInstrs(instrs []ssa.Instruction, instrToRm ssa.Instruction) []ssa.Instruction {
