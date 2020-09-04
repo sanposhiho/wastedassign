@@ -23,7 +23,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	for _, sf := range s.SrcFuncs {
 		for _, bl := range sf.Blocks {
-			blCopy := bl
+			blCopy := *bl
 			for _, ist := range bl.Instrs {
 				blCopy.Instrs = rmInstrFromInstrs(blCopy.Instrs, ist)
 				switch ist.(type) {
@@ -31,7 +31,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					var buf [10]*ssa.Value
 					for _, op := range ist.Operands(buf[:0]) {
 						if (*op) != nil && opInLocals(sf.Locals, op) {
-							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{blCopy}, op); reason != notWasted {
+							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{&blCopy}, op); reason != notWasted {
 								pass.Reportf(ist.Pos(), reason.String())
 							}
 						}
@@ -66,9 +66,10 @@ func (wr wastedReason) String() string {
 // 次のblockまでみて、storeが連続であるかを調べる
 func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value) wastedReason {
 	wastedReasons := []wastedReason{}
-	breakFlag := false
+	wastedReasonsCurrentBls := []wastedReason{}
 
 	for _, bl := range bls {
+		breakFlag := false
 		for _, ist := range bl.Instrs {
 			if breakFlag {
 				break
@@ -79,7 +80,7 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value) was
 				for _, op := range ist.Operands(buf[:0]) {
 					if *op == *currentOp {
 						if w.Addr.Name() == (*currentOp).Name() {
-							wastedReasons = append(wastedReasons, reassignedSoon)
+							wastedReasonsCurrentBls = append(wastedReasonsCurrentBls, reassignedSoon)
 							breakFlag = true
 							break
 						} else {
@@ -97,16 +98,16 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value) was
 				}
 			}
 		}
-
-		if len(bl.Succs) != 0 {
+		if len(bl.Succs) != 0 && !breakFlag {
 			wastedReason := isNextOperationToOpIsStore(bl.Succs, currentOp)
 			if wastedReason == notWasted {
 				return notWasted
 			}
 			wastedReasons = append(wastedReasons, wastedReason)
-			// SuccsにcurrentOpに対する操作がなかった
 		}
 	}
+
+	wastedReasons = append(wastedReasons, wastedReasonsCurrentBls...)
 
 	if len(wastedReasons) != 0 {
 		if containReassignedSoon(wastedReasons) {
