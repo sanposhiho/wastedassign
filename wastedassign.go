@@ -30,7 +30,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					var buf [10]*ssa.Value
 					for _, op := range ist.Operands(buf[:0]) {
 						if (*op) != nil && opInLocals(sf.Locals, op) {
-							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{blCopy}, op, 0); reason != notWasted {
+							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{blCopy}, op, 0, sf.Locals); reason != notWasted {
 								pass.Reportf(ist.Pos(), reason.String())
 							}
 						}
@@ -64,7 +64,7 @@ func (wr wastedReason) String() string {
 }
 
 // 次のblockまでみて、storeが連続であるかを調べる
-func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, depth int) wastedReason {
+func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, depth int, locals []*ssa.Alloc) wastedReason {
 
 	// depth == 0の時は少なくとも一つstoreが見つかるので一回めは飛ばすためのflag
 	skipStore := depth == 0
@@ -74,16 +74,20 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, dep
 
 	for _, bl := range bls {
 		for _, ist := range bl.Instrs {
-			switch ist.(type) {
+			switch w := ist.(type) {
 			case *ssa.Store:
 				var buf [10]*ssa.Value
 				for _, op := range ist.Operands(buf[:0]) {
 					if *op == *currentOp {
-						if !skipStore {
-							// 連続storeなのでtrue
-							return reassignedSoon
+						if w.Addr.Name() == (*currentOp).Name() {
+							if !skipStore {
+								// 連続storeなのでtrue
+								return reassignedSoon
+							}
+							skipStore = false
+						} else if w.Val.Name() == (*currentOp).Name() {
+							return ""
 						}
-						skipStore = false
 					}
 				}
 			default:
@@ -99,7 +103,7 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, dep
 
 		if len(bl.Succs) != 0 {
 			noNextSuccs = false
-			wastedReason := isNextOperationToOpIsStore(bl.Succs, currentOp, depth+1)
+			wastedReason := isNextOperationToOpIsStore(bl.Succs, currentOp, depth+1, locals)
 			if wastedReason != "" {
 				return wastedReason
 			}
