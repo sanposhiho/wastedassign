@@ -99,7 +99,7 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value) was
 			}
 		}
 		if len(bl.Succs) != 0 && !breakFlag {
-			wastedReason := isNextOperationToOpIsStore(bl.Succs, currentOp)
+			wastedReason := isNextOperationToOpIsStore(rmSameBlock(bl.Succs, bl), currentOp)
 			if wastedReason == notWasted {
 				return notWasted
 			}
@@ -116,6 +116,17 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value) was
 		return noUseUntilReturn
 	}
 	return noUseUntilReturn
+}
+
+func rmSameBlock(bls []*ssa.BasicBlock, currentBl *ssa.BasicBlock) []*ssa.BasicBlock {
+	rto := []*ssa.BasicBlock{}
+
+	for _, bl := range bls {
+		if bl != currentBl {
+			rto = append(rto, bl)
+		}
+	}
+	return rto
 }
 
 func containNotWasted(ws []wastedReason) bool {
