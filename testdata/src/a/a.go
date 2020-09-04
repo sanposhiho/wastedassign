@@ -66,3 +66,29 @@ func r(param int) int {
 	useOutOfIf += 200 // want "reassigned, but never used afterwards"
 	return ret
 }
+
+func mugen() {
+	var i int
+	var hoge int
+	for {
+		hoge = 5 //want "wasted assignment"
+		// break
+	}
+
+	println(i)
+	println(hoge)
+	return
+}
+
+func noMugen() {
+	var i int
+	var hoge int
+	for {
+		hoge = 5
+		break
+	}
+
+	println(i)
+	println(hoge)
+	return
+}
