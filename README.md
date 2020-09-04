@@ -11,12 +11,16 @@ package a
 
 func f() {
 	useOutOfIf := 0 // want "wasted assignment"
-	if false {
+	err := doHoge()
+	if err != nil {
 		useOutOfIf = 10 // want "wasted assignment"
 		useOutOfIf = 10 // want "reassigned, but never used afterwards"
 
 		return
 	}
+	
+	err = doFuga() // want "reassigned, but never used afterwards"
+	
 	useOutOfIf = 12
 	println(useOutOfIf)
 	return
@@ -30,3 +34,5 @@ func f() {
 
 - 代入されたがreturnまでその代入された値が使用されることはなかった
 - 代入されたが代入された値が用いられることなく、別の値に変更された
+
+これにより
