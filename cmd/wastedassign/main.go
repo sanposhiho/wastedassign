@@ -6,4 +6,3 @@ import (
 )
 
 func main() { unitchecker.Main(wastedassign.Analyzer) }
-
