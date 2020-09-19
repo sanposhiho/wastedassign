@@ -27,10 +27,29 @@ func f() {
 }
 ```
 
+# Installation
+
+```
+go get -u github.com/sanposhiho/wastedassign/cmd/wastedassign
+```
+
+# Usage
+
+```
+go vet -vettool=`which wastedassign` ./...
+```
+
 # wastedassign(Japanese)
 `wastedassign` は無駄な代入を発見してくれる静的解析ツールです。
 
-以下のようなstatementsを発見します。
+以下のようなケースに役立ちます
 
-- 代入されたがreturnまでその代入された値が使用されることはなかった
-- 代入されたが代入された値が用いられることなく、別の値に変更された
+- 無駄な代入文を省くことによる可読性アップ
+- 無駄な再代入を検出することによる使用忘れの確認
+
+また、使用しないことが明示的にわかることで、
+
+- なぜ使用しないのか
+- 関数の返り値として返す必要がそもそもないのではないか（上記画像で言うと、doFuga()はそもそもエラーを返す必要がないのではないか
+
+などの議論が生まれるきっかけとなります。
