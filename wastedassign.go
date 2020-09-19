@@ -32,7 +32,9 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					for _, op := range ist.Operands(buf[:0]) {
 						if (*op) != nil && opInLocals(sf.Locals, op) {
 							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{&blCopy}, op, nil); reason != notWasted {
-								pass.Reportf(ist.Pos(), reason.String())
+								if ist.Pos() != 0 {
+									pass.Reportf(ist.Pos(), reason.String())
+								}
 							}
 						}
 					}
