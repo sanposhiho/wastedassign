@@ -3,6 +3,13 @@ package a
 func p(x int) int {
 	return x + 1
 }
+
+func noUseParams(params string) int {
+	a := 12
+	println(a)
+	return a
+}
+
 func f(param int) int {
 	println(param)
 	useOutOfIf := 1212121 // want "wasted assignment"
