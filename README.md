@@ -6,20 +6,24 @@ found the value ...
 - reassigned, but never used afterwards
 - reassigned, but reassigned soon
 
+## Sample
+
+The comment on the right is what this tool reports
+
 ```
 package a
 
 func f() {
-	useOutOfIf := 0 // want "wasted assignment"
+	useOutOfIf := 0 // "wasted assignment"
 	err := doHoge()
 	if err != nil {
-		useOutOfIf = 10 // want "wasted assignment"
-		useOutOfIf = 10 // want "reassigned, but never used afterwards"
+		useOutOfIf = 10 // "wasted assignment"
+		useOutOfIf = 10 // "reassigned, but never used afterwards"
 
 		return
 	}
 	
-	err = doFuga() // want "reassigned, but never used afterwards"
+	err = doFuga() // "reassigned, but never used afterwards"
 	
 	useOutOfIf = 12
 	println(useOutOfIf)
@@ -27,13 +31,13 @@ func f() {
 }
 ```
 
-# Installation
+## Installation
 
 ```
 go get -u github.com/sanposhiho/wastedassign/cmd/wastedassign
 ```
 
-# Usage
+## Usage
 
 ```
 go vet -vettool=`which wastedassign` ./...
@@ -50,6 +54,6 @@ go vet -vettool=`which wastedassign` ./...
 また、使用しないことが明示的にわかることで、
 
 - なぜ使用しないのか
-- 関数の返り値として返す必要がそもそもないのではないか（上記画像で言うと、doFuga()はそもそもエラーを返す必要がないのではないか
+- 関数の返り値として返す必要がそもそもないのではないか（上記Sampleで言うと、doFuga()はそもそもエラーを返す必要がないのではないか
 
 などの議論が生まれるきっかけとなります。
