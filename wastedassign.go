@@ -74,39 +74,6 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 
-func searchTypeSwitchStmt(bodyList []ast.Stmt) []token.Pos {
-	result := []token.Pos{}
-
-	for _, l := range bodyList {
-		switch a := l.(type) {
-		case *ast.IfStmt:
-			re := searchTypeSwitchStmt(a.Body.List)
-			result = append(result, re...)
-		case *ast.BlockStmt:
-			re := searchTypeSwitchStmt(a.List)
-			result = append(result, re...)
-		case *ast.SwitchStmt:
-			re := searchTypeSwitchStmt(a.Body.List)
-			result = append(result, a.Pos())
-			result = append(result, re...)
-		case *ast.TypeSwitchStmt:
-			re := searchTypeSwitchStmt(a.Body.List)
-			result = append(result, re...)
-		case *ast.SelectStmt:
-			re := searchTypeSwitchStmt(a.Body.List)
-			result = append(result, re...)
-		case *ast.ForStmt:
-			re := searchTypeSwitchStmt(a.Body.List)
-			result = append(result, re...)
-		case *ast.RangeStmt:
-			re := searchTypeSwitchStmt(a.Body.List)
-			result = append(result, re...)
-		}
-	}
-
-	return result
-}
-
 type wastedReason string
 
 const (
