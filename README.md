@@ -40,6 +40,8 @@ go get -u github.com/sanposhiho/wastedassign/cmd/wastedassign
 ## Usage
 
 ```
+# in your project
+
 go vet -vettool=`which wastedassign` ./...
 ```
 
