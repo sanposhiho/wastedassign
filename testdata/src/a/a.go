@@ -44,6 +44,21 @@ func f(param int) int {
 	return ret
 }
 
+func checkLoopTest() int {
+	hoge := 12
+	noUse := 1111
+	println(noUse)
+
+	noUse = 1111 // want "reassigned, but never used afterwards"
+	for {
+		if hoge == 14 {
+			break
+		}
+		hoge = hoge + 1
+	}
+	return hoge
+}
+
 func r(param int) int {
 	println(param)
 	useOutOfIf := 1212121
@@ -71,7 +86,7 @@ func mugen() {
 	var i int
 	var hoge int
 	for {
-		hoge = 5 //want "wasted assignment"
+		hoge = 5 // want "reassigned, but never used afterwards"
 		// break
 	}
 
