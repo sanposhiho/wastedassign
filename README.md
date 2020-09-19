@@ -1,4 +1,4 @@
-# wastedassign(English)
+# wastedassign
 `wastedassign` finds wasted assignment statements
 
 found the value ...
