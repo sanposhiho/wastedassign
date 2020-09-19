@@ -1,7 +1,23 @@
 package a
 
+import (
+	"strings"
+)
+
 func p(x int) int {
 	return x + 1
+}
+
+func multiple(val interface{}, times uint) interface{} {
+
+	switch hogehoge := val.(type) {
+	case int:
+		return 12
+	case string:
+		return strings.Repeat(hogehoge, int(times))
+	default:
+		return nil
+	}
 }
 
 func noUseParams(params string) int {

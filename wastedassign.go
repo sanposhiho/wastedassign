@@ -1,8 +1,13 @@
 package wastedassign
 
 import (
+	"go/ast"
+	"go/token"
+
 	"github.com/sanposhiho/tools/go/analysis/passes/buildssa"
+	"github.com/sanposhiho/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/ast/inspector"
 	"golang.org/x/tools/go/ssa"
 )
 
@@ -15,12 +20,30 @@ var Analyzer = &analysis.Analyzer{
 	Run:  run,
 	Requires: []*analysis.Analyzer{
 		buildssa.Analyzer,
+		inspect.Analyzer,
 	},
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
-	s := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
+type wastedAssignStruct struct {
+	pos    token.Pos
+	reason string
+}
 
+func run(pass *analysis.Pass) (interface{}, error) {
+
+	// type switchのあるlineの検出
+	typeSwitchPos := map[int]bool{}
+	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	inspect.Preorder([]ast.Node{new(ast.TypeSwitchStmt)}, func(n ast.Node) {
+		switch n := n.(type) {
+		case *ast.TypeSwitchStmt:
+			typeSwitchPos[pass.Fset.Position(n.Pos()).Line] = true
+		}
+	})
+
+	wastedAssignMap := []wastedAssignStruct{}
+
+	s := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
 	for _, sf := range s.SrcFuncs {
 		for _, bl := range sf.Blocks {
 			blCopy := *bl
@@ -32,8 +55,11 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					for _, op := range ist.Operands(buf[:0]) {
 						if (*op) != nil && opInLocals(sf.Locals, op) {
 							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{&blCopy}, op, nil); reason != notWasted {
-								if ist.Pos() != 0 {
-									pass.Reportf(ist.Pos(), reason.String())
+								if ist.Pos() != 0 && !typeSwitchPos[pass.Fset.Position(ist.Pos()).Line] {
+									wastedAssignMap = append(wastedAssignMap, wastedAssignStruct{
+										pos:    ist.Pos(),
+										reason: reason.String(),
+									})
 								}
 							}
 						}
@@ -41,6 +67,9 @@ func run(pass *analysis.Pass) (interface{}, error) {
 				}
 			}
 		}
+	}
+	for _, was := range wastedAssignMap {
+		pass.Reportf(was.pos, was.reason)
 	}
 	return nil, nil
 }
