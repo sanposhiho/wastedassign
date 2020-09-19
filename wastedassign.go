@@ -31,7 +31,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					var buf [10]*ssa.Value
 					for _, op := range ist.Operands(buf[:0]) {
 						if (*op) != nil && opInLocals(sf.Locals, op) {
-							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{&blCopy}, op); reason != notWasted {
+							if reason := isNextOperationToOpIsStore([]*ssa.BasicBlock{&blCopy}, op, nil); reason != notWasted {
 								pass.Reportf(ist.Pos(), reason.String())
 							}
 						}
@@ -64,11 +64,19 @@ func (wr wastedReason) String() string {
 }
 
 // 次のblockまでみて、storeが連続であるかを調べる
-func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value) wastedReason {
+func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, haveCheckedMap *map[int]bool) wastedReason {
 	wastedReasons := []wastedReason{}
 	wastedReasonsCurrentBls := []wastedReason{}
 
+	if haveCheckedMap == nil {
+		haveCheckedMap = &map[int]bool{}
+	}
+
 	for _, bl := range bls {
+		if (*haveCheckedMap)[bl.Index] == true {
+			continue
+		}
+		(*haveCheckedMap)[bl.Index] = true
 		breakFlag := false
 		for _, ist := range bl.Instrs {
 			if breakFlag {
@@ -99,7 +107,7 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value) was
 			}
 		}
 		if len(bl.Succs) != 0 && !breakFlag {
-			wastedReason := isNextOperationToOpIsStore(rmSameBlock(bl.Succs, bl), currentOp)
+			wastedReason := isNextOperationToOpIsStore(rmSameBlock(bl.Succs, bl), currentOp, haveCheckedMap)
 			if wastedReason == notWasted {
 				return notWasted
 			}
