@@ -4,32 +4,28 @@
 found the value ...
 
 - reassigned, but never used afterwards
-- reassigned, but reassigned soon
+- reassigned, but reassigned without using value
 
-## Sample
+## Example
 
 The comment on the right is what this tool reports
 
 ```
-package a
+func f() int {
+	a := 0 
+        b := 0
+        fmt.Print(a)
+        fmt.Print(b)
+        a = 1  // This reassignment is wasted, because never used afterwards. Wastedassign find this 
 
-func f() {
-	useOutOfIf := 0 // "wasted assignment"
-	err := doHoge()
-	if err != nil {
-		useOutOfIf = 10 // "wasted assignment"
-		useOutOfIf = 10 // "reassigned, but never used afterwards"
-
-		return
-	}
-	
-	err = doFuga() // "reassigned, but never used afterwards"
-	
-	useOutOfIf = 12
-	println(useOutOfIf)
-	return
+        b = 1  // This reassignment is wasted, because reassigned without use this value. Wastedassign find this 
+        b = 2
+        fmt.Print(b)
+        
+	return 1 + 2
 }
 ```
+
 
 ## Installation
 
@@ -56,6 +52,6 @@ go vet -vettool=`which wastedassign` ./...
 また、使用しないことが明示的にわかることで、
 
 - なぜ使用しないのか
-- 関数の返り値として返す必要がそもそもないのではないか（上記Sampleで言うと、doFuga()はそもそもエラーを返す必要がないのではないか
+- 使用しない変数が関数の返り値として存在した場合、関数の返り値として返す必要がないのではないか
 
 などの議論が生まれるきっかけとなります。
