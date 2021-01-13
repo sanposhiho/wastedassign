@@ -3,8 +3,8 @@
 
 found the value ...
 
-- reassigned, but never used afterwards
-- reassigned, but reassigned without using value
+- reassigned, but never used afterward
+- reassigned, but reassigned without using the value
 
 ## Example
 
