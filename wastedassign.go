@@ -31,7 +31,6 @@ type wastedAssignStruct struct {
 
 func run(pass *analysis.Pass) (interface{}, error) {
 
-	// type switchのあるlineの検出
 	typeSwitchPos := map[int]bool{}
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	inspect.Preorder([]ast.Node{new(ast.TypeSwitchStmt)}, func(n ast.Node) {
@@ -94,7 +93,6 @@ func (wr wastedReason) String() string {
 	return ""
 }
 
-// 次のblockまでみて、storeが連続であるかを調べる
 func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, haveCheckedMap *map[int]bool) wastedReason {
 	wastedReasons := []wastedReason{}
 	wastedReasonsCurrentBls := []wastedReason{}
