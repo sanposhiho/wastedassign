@@ -1,6 +1,7 @@
 package wastedassign
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
@@ -72,12 +73,12 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 				fn := pass.TypesInfo.Defs[fdecl.Name].(*types.Func)
 				if fn == nil {
-					panic(fn)
+					return nil, fmt.Errorf("failed to get func's typesinfo")
 				}
 
 				f := ssapkg.Prog.FuncValue(fn)
 				if f == nil {
-					panic(fn)
+					return nil, fmt.Errorf("failed to get func's SSA-form intermediate representation")
 				}
 
 				var addAnons func(f *ssa.Function)
