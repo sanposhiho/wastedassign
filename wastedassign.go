@@ -2,7 +2,6 @@ package wastedassign
 
 import (
 	"go/ast"
-	"go/importer"
 	"go/token"
 	"go/types"
 
@@ -10,7 +9,6 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/ssa/ssautil"
 )
 
 const doc = "wastedassign finds wasted assignment statements."
@@ -31,16 +29,29 @@ type wastedAssignStruct struct {
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
-
-	cfg := &types.Config{Importer: importer.Default()}
-
-	mode := ssa.NaiveForm
-	ssapkg, _, err := ssautil.BuildPackage(cfg, pass.Fset, pass.Pkg, pass.Files, mode)
-	if err != nil {
-		return nil, err
-	}
-
 	// Plundered from buildssa.Run.
+	mode := ssa.NaiveForm
+	prog := ssa.NewProgram(pass.Fset, mode)
+
+	// Create SSA packages for all imports.
+	// Order is not significant.
+	created := make(map[*types.Package]bool)
+	var createAll func(pkgs []*types.Package)
+	createAll = func(pkgs []*types.Package) {
+		for _, p := range pkgs {
+			if !created[p] {
+				created[p] = true
+				prog.CreatePackage(p, nil, nil, true)
+				createAll(p.Imports())
+			}
+		}
+	}
+	createAll(pass.Pkg.Imports())
+
+	// Create and build the primary package.
+	ssapkg := prog.CreatePackage(pass.Pkg, pass.Files, pass.TypesInfo, false)
+	ssapkg.Build()
+
 	var srcFuncs []*ssa.Function
 	for _, f := range pass.Files {
 		for _, decl := range f.Decls {
