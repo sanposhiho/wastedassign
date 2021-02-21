@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func p(x int) int {
+func pa(x int) int {
 	return x + 1
 }
 
@@ -36,12 +36,12 @@ func f(param int) int {
 	} else if param == 100 {
 		useOutOfIf = 100 // want "wasted assignment"
 		useOutOfIf = 201
-		useOutOfIf = p(useOutOfIf)
+		useOutOfIf = pa(useOutOfIf)
 		useOutOfIf += 200 // want "wasted assignment"
 	} else {
 		useOutOfIf = 100
 		useOutOfIf += 100
-		useOutOfIf = p(useOutOfIf)
+		useOutOfIf = pa(useOutOfIf)
 		useOutOfIf += 200 // want "wasted assignment"
 	}
 
@@ -51,12 +51,12 @@ func f(param int) int {
 	} else if param == 200 {
 		useOutOfIf = 100 // want "wasted assignment"
 		useOutOfIf = 201
-		useOutOfIf = p(useOutOfIf)
+		useOutOfIf = pa(useOutOfIf)
 		useOutOfIf += 200
 	} else {
 		useOutOfIf = 100
 		useOutOfIf += 100
-		useOutOfIf = p(useOutOfIf)
+		useOutOfIf = pa(useOutOfIf)
 		useOutOfIf += 200
 	}
 	// useOutOfIf = 12
@@ -94,7 +94,7 @@ func r(param int) int {
 	} else if param == 200 {
 		useOutOfIf = 100 // want "wasted assignment"
 		useOutOfIf = 100
-		useOutOfIf = p(useOutOfIf)
+		useOutOfIf = pa(useOutOfIf)
 		useOutOfIf += 200 // want "wasted assignment"
 	}
 	useOutOfIf = 12

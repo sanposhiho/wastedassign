@@ -3,10 +3,10 @@ package wastedassign
 import (
 	"go/ast"
 	"go/token"
+	"go/types"
 
-	"github.com/sanposhiho/tools/go/analysis/passes/buildssa"
-	"github.com/sanposhiho/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 	"golang.org/x/tools/go/ssa"
 )
@@ -19,7 +19,6 @@ var Analyzer = &analysis.Analyzer{
 	Doc:  doc,
 	Run:  run,
 	Requires: []*analysis.Analyzer{
-		buildssa.Analyzer,
 		inspect.Analyzer,
 	},
 }
@@ -30,6 +29,68 @@ type wastedAssignStruct struct {
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
+	// Plundered from buildssa.Run.
+	mode := ssa.NaiveForm
+	prog := ssa.NewProgram(pass.Fset, mode)
+
+	// Create SSA packages for all imports.
+	// Order is not significant.
+	created := make(map[*types.Package]bool)
+	var createAll func(pkgs []*types.Package)
+	createAll = func(pkgs []*types.Package) {
+		for _, p := range pkgs {
+			if !created[p] {
+				created[p] = true
+				prog.CreatePackage(p, nil, nil, true)
+				createAll(p.Imports())
+			}
+		}
+	}
+	createAll(pass.Pkg.Imports())
+
+	// Create and build the primary package.
+	ssapkg := prog.CreatePackage(pass.Pkg, pass.Files, pass.TypesInfo, false)
+	ssapkg.Build()
+
+	var srcFuncs []*ssa.Function
+	for _, f := range pass.Files {
+		for _, decl := range f.Decls {
+			if fdecl, ok := decl.(*ast.FuncDecl); ok {
+
+				// SSA will not build a Function
+				// for a FuncDecl named blank.
+				// That's arguably too strict but
+				// relaxing it would break uniqueness of
+				// names of package members.
+				if fdecl.Name.Name == "_" {
+					continue
+				}
+
+				// (init functions have distinct Func
+				// objects named "init" and distinct
+				// ssa.Functions named "init#1", ...)
+
+				fn := pass.TypesInfo.Defs[fdecl.Name].(*types.Func)
+				if fn == nil {
+					panic(fn)
+				}
+
+				f := ssapkg.Prog.FuncValue(fn)
+				if f == nil {
+					panic(fn)
+				}
+
+				var addAnons func(f *ssa.Function)
+				addAnons = func(f *ssa.Function) {
+					srcFuncs = append(srcFuncs, f)
+					for _, anon := range f.AnonFuncs {
+						addAnons(anon)
+					}
+				}
+				addAnons(f)
+			}
+		}
+	}
 
 	typeSwitchPos := map[int]bool{}
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
@@ -42,8 +103,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	wastedAssignMap := []wastedAssignStruct{}
 
-	s := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
-	for _, sf := range s.SrcFuncs {
+	for _, sf := range srcFuncs {
 		for _, bl := range sf.Blocks {
 			blCopy := *bl
 			for _, ist := range bl.Instrs {
