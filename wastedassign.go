@@ -155,7 +155,7 @@ func (wr wastedReason) String() string {
 	case noUseUntilReturn:
 		return "reassigned, but never used afterwards"
 	case reassignedSoon:
-		return "wasted assignment"
+		return "reassigned, but reassigned without using the value"
 	case notWasted:
 		return ""
 	default:
