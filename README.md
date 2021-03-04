@@ -41,3 +41,12 @@ go get -u github.com/sanposhiho/wastedassign/cmd/wastedassign
 go vet -vettool=`which wastedassign` ./...
 ```
 
+## Contribution
+
+I am waiting for your contribution. Feel free to create an issue or a PR!
+
+### Run test
+
+```
+go test
+```
