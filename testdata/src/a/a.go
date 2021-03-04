@@ -109,7 +109,7 @@ func mugen() {
 	var i int
 	var hoge int
 	for {
-		hoge = 5 // want "reassigned, but never used afterwards"
+		hoge = 5 // want "wasted assignment"
 		// break
 	}
 
@@ -129,4 +129,27 @@ func noMugen() {
 	println(i)
 	println(hoge)
 	return
+}
+
+func reassignInsideLoop() {
+	bar := func(b []byte) ([]byte, error) { return b, nil }
+	var err error
+	var rest []byte
+	for {
+		rest, err = bar(rest)
+		if err == nil {
+			break
+		}
+	}
+	return
+}
+
+func reassignInsideLoop2() {
+	var x int = 0
+	var y int = 1
+	for i := 1; i < 3; i++ {
+		x += y
+		y *= 2 * i
+	}
+	println(x)
 }

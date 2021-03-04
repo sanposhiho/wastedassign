@@ -163,20 +163,20 @@ func (wr wastedReason) String() string {
 	}
 }
 
-func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, haveCheckedMap map[int]bool) wastedReason {
+func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, haveCheckedMap map[int]int) wastedReason {
 	var wastedReasons []wastedReason
 	var wastedReasonsCurrentBls []wastedReason
 
 	if haveCheckedMap == nil {
-		haveCheckedMap = map[int]bool{}
+		haveCheckedMap = map[int]int{}
 	}
 
 	for _, bl := range bls {
-		if haveCheckedMap[bl.Index] {
+		if haveCheckedMap[bl.Index] == 2 {
 			continue
 		}
 
-		haveCheckedMap[bl.Index] = true
+		haveCheckedMap[bl.Index]++
 		breakFlag := false
 		for _, ist := range bl.Instrs {
 			if breakFlag {
@@ -201,7 +201,7 @@ func isNextOperationToOpIsStore(bls []*ssa.BasicBlock, currentOp *ssa.Value, hav
 				var buf [10]*ssa.Value
 				for _, op := range ist.Operands(buf[:0]) {
 					if *op == *currentOp {
-						// 連続storeではなかった
+						// It wasn't a continuous store.
 						return notWasted
 					}
 				}
