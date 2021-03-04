@@ -28,28 +28,28 @@ func noUseParams(params string) int {
 
 func f(param int) int {
 	println(param)
-	useOutOfIf := 1212121 // want "wasted assignment"
+	useOutOfIf := 1212121 // want "reassigned, but reassigned without using the value"
 	ret := 0
 	if false {
 		useOutOfIf = 200 // want "reassigned, but never used afterwards"
 		return 0
 	} else if param == 100 {
-		useOutOfIf = 100 // want "wasted assignment"
+		useOutOfIf = 100 // want "reassigned, but reassigned without using the value"
 		useOutOfIf = 201
 		useOutOfIf = pa(useOutOfIf)
-		useOutOfIf += 200 // want "wasted assignment"
+		useOutOfIf += 200 // want "reassigned, but reassigned without using the value"
 	} else {
 		useOutOfIf = 100
 		useOutOfIf += 100
 		useOutOfIf = pa(useOutOfIf)
-		useOutOfIf += 200 // want "wasted assignment"
+		useOutOfIf += 200 // want "reassigned, but reassigned without using the value"
 	}
 
 	if false {
 		useOutOfIf = 200 // want "reassigned, but never used afterwards"
 		return 0
 	} else if param == 200 {
-		useOutOfIf = 100 // want "wasted assignment"
+		useOutOfIf = 100 // want "reassigned, but reassigned without using the value"
 		useOutOfIf = 201
 		useOutOfIf = pa(useOutOfIf)
 		useOutOfIf += 200
@@ -92,10 +92,10 @@ func r(param int) int {
 	} else if param == 100 {
 		ret = useOutOfIf
 	} else if param == 200 {
-		useOutOfIf = 100 // want "wasted assignment"
+		useOutOfIf = 100 // want "reassigned, but reassigned without using the value"
 		useOutOfIf = 100
 		useOutOfIf = pa(useOutOfIf)
-		useOutOfIf += 200 // want "wasted assignment"
+		useOutOfIf += 200 // want "reassigned, but reassigned without using the value"
 	}
 	useOutOfIf = 12
 	println(useOutOfIf)
@@ -109,7 +109,7 @@ func mugen() {
 	var i int
 	var hoge int
 	for {
-		hoge = 5 // want "wasted assignment"
+		hoge = 5 // want "reassigned, but reassigned without using the value"
 		// break
 	}
 
