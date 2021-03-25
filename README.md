@@ -41,6 +41,8 @@ go get -u github.com/sanposhiho/wastedassign/cmd/wastedassign
 go vet -vettool=`which wastedassign` ./...
 ```
 
+And, you can use wastedassign in [golangci-lint](https://github.com/golangci/golangci-lint).
+
 ## Contribution
 
 I am waiting for your contribution. Feel free to create an issue or a PR!
