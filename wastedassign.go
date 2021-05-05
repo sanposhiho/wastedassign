@@ -145,7 +145,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 type wastedReason string
 
 const (
-	noUseUntilReturn wastedReason = "reassigned, but never used afterwards"
+	noUseUntilReturn wastedReason = "assigned, but never used afterwards"
 	reassignedSoon   wastedReason = "wasted assignment"
 	notWasted        wastedReason = ""
 )
@@ -153,9 +153,9 @@ const (
 func (wr wastedReason) String() string {
 	switch wr {
 	case noUseUntilReturn:
-		return "reassigned, but never used afterwards"
+		return "assigned, but never used afterwards"
 	case reassignedSoon:
-		return "reassigned, but reassigned without using the value"
+		return "assigned, but reassigned without using the value"
 	case notWasted:
 		return ""
 	default:
