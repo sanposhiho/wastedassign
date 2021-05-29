@@ -7,7 +7,7 @@ package main
 import (
 	"strings"
 
-	"github.com/sanposhiho/wastedassign"
+	"github.com/sanposhiho/wastedassign/v2"
 	"golang.org/x/tools/go/analysis"
 )
 

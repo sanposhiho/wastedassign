@@ -1,4 +1,4 @@
-module github.com/sanposhiho/wastedassign
+module github.com/sanposhiho/wastedassign/v2
 
 go 1.14
 
