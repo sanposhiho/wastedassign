@@ -30,7 +30,7 @@ func f() int {
 ## Installation
 
 ```
-go get -u github.com/sanposhiho/wastedassign/cmd/wastedassign
+go get -u github.com/sanposhiho/wastedassign/v2/cmd/wastedassign
 ```
 
 ## Usage
