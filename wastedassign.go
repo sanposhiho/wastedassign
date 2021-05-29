@@ -127,7 +127,11 @@ func run(pass *analysis.Pass) (interface{}, error) {
 						continue
 					}
 
-					v := (*op).(*ssa.Alloc)
+					v, ok := (*op).(*ssa.Alloc)
+					if !ok {
+						// This block should never have been executed.
+						continue
+					}
 					wastedAssignMap = append(wastedAssignMap, wastedAssignStruct{
 						pos:    ist.Pos(),
 						reason: reason.String(v),
