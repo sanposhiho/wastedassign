@@ -2,6 +2,7 @@ package wastedassign
 
 import (
 	"errors"
+	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
@@ -126,9 +127,14 @@ func run(pass *analysis.Pass) (interface{}, error) {
 						continue
 					}
 
+					v, ok := (*op).(*ssa.Alloc)
+					if !ok {
+						// This block should never have been executed.
+						continue
+					}
 					wastedAssignMap = append(wastedAssignMap, wastedAssignStruct{
 						pos:    ist.Pos(),
-						reason: reason.String(),
+						reason: reason.String(v),
 					})
 				}
 			}
@@ -150,12 +156,12 @@ const (
 	notWasted        wastedReason = ""
 )
 
-func (wr wastedReason) String() string {
+func (wr wastedReason) String(a *ssa.Alloc) string {
 	switch wr {
 	case noUseUntilReturn:
-		return "assigned, but never used afterwards"
+		return fmt.Sprintf("assigned to %s, but never used afterwards", a.Comment)
 	case reassignedSoon:
-		return "assigned, but reassigned without using the value"
+		return fmt.Sprintf("assigned to %s, but reassigned without using the value", a.Comment)
 	case notWasted:
 		return ""
 	default:
