@@ -8,8 +8,6 @@ found the value ...
 
 ## Example
 
-The comment on the right is what this tool reports
-
 ```go
 package main
 
@@ -57,7 +55,9 @@ And, you can use wastedassign in [golangci-lint](https://github.com/golangci/gol
 
 ## Contribution
 
-I am waiting for your contribution. Feel free to create an issue or a PR!
+I am waiting for your contribution :D 
+
+Feel free to create an issue or a PR!
 
 ### Run test
 
