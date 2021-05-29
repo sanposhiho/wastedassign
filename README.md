@@ -30,7 +30,7 @@ func f() int {
 
 
 ```bash
-$ go vet -vettool=`which go/1.16.0/bin/wastedassign` sample.go            
+$ go vet -vettool=`which wastedassign` sample.go            
 # command-line-arguments
 ./sample.go:10:2: assigned to a, but never used afterwards
 ./sample.go:12:2: assigned to b, but reassigned without using the value
