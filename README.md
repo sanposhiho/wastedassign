@@ -10,7 +10,11 @@ found the value ...
 
 The comment on the right is what this tool reports
 
-```
+```go
+package main
+
+import "fmt"
+
 func f() int {
 	a := 0 
         b := 0
@@ -24,6 +28,14 @@ func f() int {
         
 	return 1 + 2
 }
+```
+
+
+```bash
+$ go vet -vettool=`which go/1.16.0/bin/wastedassign` sample.go            
+# command-line-arguments
+./sample.go:10:2: assigned to a, but never used afterwards
+./sample.go:12:2: assigned to b, but reassigned without using the value
 ```
 
 
