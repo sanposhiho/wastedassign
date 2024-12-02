@@ -13,7 +13,8 @@ import (
 
 // flags for Analyzer.Flag.
 // If you would like to specify flags for your plugin, you can put them via 'ldflags' as below.
-//     $ go build -buildmode=plugin -ldflags "-X 'main.flags=-opt val'" github.com/sanposhiho/wastedassign/plugin/wastedassign
+//
+//	$ go build -buildmode=plugin -ldflags "-X 'main.flags=-opt val'" github.com/sanposhiho/wastedassign/plugin/wastedassign
 var flags string
 
 // AnalyzerPlugin provides analyzers as a plugin.
