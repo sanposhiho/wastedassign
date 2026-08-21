@@ -34,20 +34,10 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	// Plundered from buildssa.Run.
 	prog := ssa.NewProgram(pass.Fset, ssa.NaiveForm)
 
-	// Create SSA packages for all imports.
-	// Order is not significant.
-	created := make(map[*types.Package]bool)
-	var createAll func(pkgs []*types.Package)
-	createAll = func(pkgs []*types.Package) {
-		for _, p := range pkgs {
-			if !created[p] {
-				created[p] = true
-				prog.CreatePackage(p, nil, nil, true)
-				createAll(p.Imports())
-			}
-		}
+	// Create SSA packages for direct imports.
+	for _, p := range pass.Pkg.Imports() {
+		prog.CreatePackage(p, nil, nil, true)
 	}
-	createAll(pass.Pkg.Imports())
 
 	// Create and build the primary package.
 	ssapkg := prog.CreatePackage(pass.Pkg, pass.Files, pass.TypesInfo, false)
