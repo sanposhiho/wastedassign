@@ -106,8 +106,8 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	for _, sf := range srcFuncs {
 		for _, bl := range sf.Blocks {
 			blCopy := *bl
-			for _, ist := range bl.Instrs {
-				blCopy.Instrs = rmInstrFromInstrs(blCopy.Instrs, ist)
+			for i, ist := range bl.Instrs {
+				blCopy.Instrs = bl.Instrs[i+1:]
 				if _, ok := ist.(*ssa.Store); !ok {
 					continue
 				}
@@ -250,16 +250,6 @@ func containReassignedSoon(ws []wastedReason) bool {
 		}
 	}
 	return false
-}
-
-func rmInstrFromInstrs(instrs []ssa.Instruction, instrToRm ssa.Instruction) []ssa.Instruction {
-	var rto []ssa.Instruction
-	for _, i := range instrs {
-		if i != instrToRm {
-			rto = append(rto, i)
-		}
-	}
-	return rto
 }
 
 func opInLocals(locals []*ssa.Alloc, op *ssa.Value) bool {
